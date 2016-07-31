@@ -42,11 +42,17 @@ Radio[] button = new Radio[Serial.list().length];
 //Daniel
 PImage heartimg;
 PImage pulseimg;
+float[] values;
+boolean teste = false;
 
 
 void setup() {
   size(700, 600);  // Stage size
   frameRate(100);
+  values = new float[3];
+  values[0] = 150;
+  values[1] = 525;
+  values[2] = 25;
   font = loadFont("AnonymousPro-24.vlw");
   textFont(font);
   textAlign(CENTER);
@@ -95,7 +101,7 @@ if(serialPortFound){
 // PRINT THE DATA AND VARIABLE VALUES
   fill(eggshell);                                       // get ready to print text
   text("Eld Pre-Alpha App",245,30);     // tell them what you are
-  if(BPM > 150)
+  if(BPM >= 150)
   {
     text("Please! Adjust the sensor",600,200);
     text("in your pulse.",600,210);
@@ -130,23 +136,30 @@ void drawDataWindows(){
 }
 
 void drawPulseWaveform(){
-  // DRAW THE PULSE WAVEFORM
-  // prepare pulse data points
-  RawY[RawY.length-1] = (1023 - Sensor) - 212;   // place the new raw datapoint at the end of the array
-  zoom = scaleBar.getPos();                      // get current waveform scale value
-  offset = map(zoom,0.5,1,150,0);                // calculate the offset needed at this scale
-  for (int i = 0; i < RawY.length-1; i++) {      // move the pulse waveform by
-    RawY[i] = RawY[i+1];                         // shifting all raw datapoints one pixel left
-    float dummy = RawY[i] * zoom + offset;       // adjust the raw data to the selected scale
-    ScaledY[i] = constrain(int(dummy),44,556);   // transfer the raw data array to the scaled array
+  if(BPM >= 200)
+  {
+    RawY[RawY.length-1] = 275;
   }
-  stroke(250,0,0);                               // red is a good color for the pulse waveform
-  noFill();
-  beginShape();                                  // using beginShape() renders fast
-  for (int x = 1; x < ScaledY.length-1; x++) {
-    vertex(x+10, ScaledY[x]);                    //draw a line connecting the data points
+  else
+  {
+     RawY[RawY.length-1] = (1023 - Sensor) - 212; 
   }
-  endShape();
+    // DRAW THE PULSE WAVEFORM
+    // prepare pulse data points
+    zoom = scaleBar.getPos();                      // get current waveform scale value
+    offset = map(zoom,0.5,1,150,0);                // calculate the offset needed at this scale
+    for (int i = 0; i < RawY.length-1; i++) {      // move the pulse waveform by
+      RawY[i] = RawY[i+1];                         // shifting all raw datapoints one pixel left
+      float dummy = RawY[i] * zoom + offset;       // adjust the raw data to the selected scale
+      ScaledY[i] = constrain(int(dummy),44,556);   // transfer the raw data array to the scaled array
+    }
+    stroke(250,0,0);                               // red is a good color for the pulse waveform
+    noFill();
+    beginShape();                                  // using beginShape() renders fast
+    for (int x = 1; x < ScaledY.length-1; x++) {
+      vertex(x+10, ScaledY[x]);                    //draw a line connecting the data points
+    }
+    endShape();
 }
 
 void drawBPMwaveform(){
@@ -174,18 +187,31 @@ void drawBPMwaveform(){
 }
 
 void drawHeart(){
-    fill(250,0,0);
-    stroke(250,0,0);
+    //fill(250,0,0);
+    //stroke(250,0,0);
+    image(pulseimg,values[1],values[2],values[0],values[0]);
+    image(heartimg,525,25,150,150);
     // the 'heart' variable is set in serialEvent when arduino sees a beat happen
     heart--;                    // heart is used to time how long the heart graphic swells when your heart beats
     heart = max(heart,0);       // don't let the heart variable go into negative numbers
-    if (heart > 0){             // if a beat happened recently,
-      strokeWeight(8);          // make the heart big
+    if (heart > 0 && teste)
+    {
+      values[0]=200;
+      values[1]=500;
+      values[2]=0;
+      teste = true;
     }
-    smooth();   // draw the heart with two bezier curves
+    else if(values[0] > 150)
+    {
+      values[0]-=10;
+      values[1]+=5;
+      values[2]+=5;
+      teste = false;
+    }
+    /*smooth();   // draw the heart with two bezier curves
     bezier(width-100,50, width-20,-20, width,140, width-100,150);
     bezier(width-100,50, width-190,-20, width-200,140, width-100,150);
-    strokeWeight(1);          // reset the strokeWeight for next time
+    strokeWeight(1);          // reset the strokeWeight for next time*/
 }
 
 void listAvailablePorts(){
